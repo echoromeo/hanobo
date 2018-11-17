@@ -51,7 +51,10 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     ip = config.get(CONF_IP_ADDRESS)
 
     # Setup connection with devices/cloud
-    hub = nobo(host, ip, False)
+    if ip == 'discover':
+        hub = nobo(serial=host)
+    else:
+        hub = nobo(serial=host, ip, False)
 
     # Verify that passed in configuration works
 #    if not hub.is_valid_login():

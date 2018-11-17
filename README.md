@@ -9,8 +9,8 @@ To get started with this superexperimental implementation:
       # Nobø Energy Control
       climate: 
       - platform: nobo_hub
-          host: [your nobø serial]
-          ip_address: [your nobø ip]
+          host: [your nobø serial] # You can use the 3 last digits if using discovery
+      #    ip_address: [your nobø ip] # Uncomment if you do not want discovery
 
 * Restart Home Assistant, you will get this warning:
 
