@@ -1,9 +1,9 @@
 # hanobo
 Home Assistant implementation of pynobo as a climate component
 
-To get started:
+To get started with this superexperimental implementation:
 
-* Download the nobo_hub.py to [your HA folder]/custom_components/climate
+* Download/clone the repo as [your HA folder]/custom_components/climate
 * Add the following to your Home Assistant configuration file:
 
       # Nobø Energy Control

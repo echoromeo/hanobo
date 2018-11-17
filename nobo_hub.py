@@ -17,7 +17,7 @@ from homeassistant.components.climate import (PLATFORM_SCHEMA,
     STATE_ECO)
 from homeassistant.const import CONF_IP_ADDRESS, CONF_HOST, TEMP_CELSIUS, PRECISION_WHOLE
 import homeassistant.helpers.config_validation as cv
-import pynobo
+from .pynobo.nobo import nobo
 
 #REQUIREMENTS = ['time', 'warnings', 'logging', 'socket', 'threading']
 
