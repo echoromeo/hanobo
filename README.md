@@ -12,4 +12,8 @@ To get started with this superexperimental implementation:
           host: [your nobø serial]
           ip_address: [your nobø ip]
 
+* Restart Home Assistant, you will get this warning:
+
+      WARNING (MainThread) [homeassistant.loader] You are using a custom component for climate.nobo_hub which has not been tested by Home Assistant. This component might cause stability problems, be sure to disable it if you do experience issues with Home Assistant.
+
 * Play around and figure out what does not work..
