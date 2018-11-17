@@ -1,0 +1,3 @@
+[submodule "pynobo"]
+	path = pynobo
+	url = git@github.com:echoromeo/pynobo.git
