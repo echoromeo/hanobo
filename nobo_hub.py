@@ -54,7 +54,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     if ip == 'discover':
         hub = nobo(serial=host)
     else:
-        hub = nobo(serial=host, ip, False)
+        hub = nobo(serial=host, ip=ip, discover=False)
 
     # Verify that passed in configuration works
 #    if not hub.is_valid_login():
