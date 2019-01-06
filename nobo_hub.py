@@ -136,11 +136,6 @@ class AwesomeHeater(ClimateDevice):
         """Return current operation ie. program, eco, comfort, away."""
         return self._current_operation
 
-    @property
-    def current_temperature(self):
-        """Return the current temperature."""
-        return self._current_temperature
-
     def set_operation_mode(self, operation_mode):
         """Set new zone override."""
         if self._nobo.zones[self._id]['override_allowed'] == '1':
