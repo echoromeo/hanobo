@@ -1,6 +1,13 @@
 # hanobo
 Home Assistant implementation of pynobo as a climate component
 
+As for now you can see and change state and set eco/comfort temperatures if you have a supported thermostat.
+
+The possible states are as following:
+* Normal (state) - Zone is following the configured calendar and currently in 'state'
+* Locked (state) - Same as above, but overrides are not allowed
+* state - Zone is overridden to 'state'
+
 To get started with this superexperimental implementation:
 
 * Download/clone the repo as [your HA folder]/custom_components/climate

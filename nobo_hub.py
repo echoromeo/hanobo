@@ -23,12 +23,12 @@ from .pynobo.nobo import nobo
 
 SUPPORT_FLAGS = SUPPORT_OPERATION_MODE | SUPPORT_TARGET_TEMPERATURE_LOW | SUPPORT_TARGET_TEMPERATURE_HIGH
 
-STATE_AWAY = 'away'
-STATE_COMFORT = 'comfort'
-STATE_PROGRAM = 'program'
+STATE_AWAY = 'Away'
+STATE_COMFORT = 'Comfort'
+STATE_NORMAL = 'Normal'
 
 OP_MODES = [
-    STATE_PROGRAM, STATE_COMFORT, STATE_ECO, STATE_AWAY
+    STATE_NORMAL, STATE_COMFORT, STATE_ECO, STATE_AWAY
 ]
 
 MIN_TEMPERATURE = 7
@@ -139,7 +139,7 @@ class AwesomeHeater(ClimateDevice):
     def set_operation_mode(self, operation_mode):
         """Set new zone override."""
         if self._nobo.zones[self._id]['override_allowed'] == '1':
-            if operation_mode == STATE_PROGRAM:
+            if operation_mode == STATE_NORMAL:
                 operation_mode = 'normal'
             mode = self._nobo.API.DICT_NAME_TO_OVERRIDE_MODE[operation_mode]
             self._nobo.create_override(mode, self._nobo.API.OVERRIDE_TYPE_NOW, self._nobo.API.OVERRIDE_TARGET_ZONE, self._id)
@@ -162,6 +162,16 @@ class AwesomeHeater(ClimateDevice):
 
         This is the only method that should fetch new data for Home Assistant.
         """
-        self._current_operation = self._nobo.get_current_zone_mode(self._id, dt_util.as_local(dt_util.now()))
+        state = self._nobo.get_current_zone_mode(self._id, dt_util.as_local(dt_util.now()))
+        if self._nobo.zones[self._id]['override_allowed'] == '1':
+            self._current_operation = 'Normal (' + state + ')'
+            for o in self._nobo.overrides:
+                if self._nobo.overrides[o]['mode'] == '0':
+                    continue  # "normal" overrides
+                elif self._nobo.overrides[o]['target_type'] == self._nobo.API.OVERRIDE_TARGET_ZONE:
+                    if self._nobo.overrides[o]['target_id'] == self._id:
+                        self._current_operation = state
+        else:
+            self._current_operation = 'Locked (' + state + ')'
         self._target_temperature_high = int(self._nobo.zones[self._id]['temp_comfort_c'])
         self._target_temperature_low = int(self._nobo.zones[self._id]['temp_eco_c'])        
