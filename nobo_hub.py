@@ -52,8 +52,10 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
 
     # Setup connection with devices/cloud
     if ip == 'discover':
+        _LOGGER.info("discovering and connecting to %s", host)
         hub = nobo(serial=host)
     else:
+        _LOGGER.info("connecting to %s:%s", ip, host)
         hub = nobo(serial=host, ip=ip, discover=False)
 
     # Verify that passed in configuration works
@@ -62,9 +64,9 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
 #        return False
 
     # Add devices
+    hub.socket_received_all_info.wait()
     add_devices(AwesomeHeater(zones, hub) for zones in hub.zones)
-
-    _LOGGER.info("The 'nobo_hub' component is ready!")
+    _LOGGER.info("component is up and running on %s:%s", hub.hub_ip, hub.hub_serial)
 
     return True
 
@@ -163,4 +165,3 @@ class AwesomeHeater(ClimateDevice):
         self._current_operation = self._nobo.get_current_zone_mode(self._id, dt_util.as_local(dt_util.now()))
         self._target_temperature_high = int(self._nobo.zones[self._id]['temp_comfort_c'])
         self._target_temperature_low = int(self._nobo.zones[self._id]['temp_eco_c'])        
-

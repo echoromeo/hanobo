@@ -17,3 +17,11 @@ To get started with this superexperimental implementation:
       WARNING (MainThread) [homeassistant.loader] You are using a custom component for climate.nobo_hub which has not been tested by Home Assistant. This component might cause stability problems, be sure to disable it if you do experience issues with Home Assistant.
 
 * Play around and figure out what does not work..
+
+* If you want some more logging info, add this to your Home Assistant configuration file:
+
+      # Extra logging
+      logger:
+        default: warning
+        logs:
+          custom_components.climate.nobo_hub: info
