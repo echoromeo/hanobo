@@ -179,5 +179,7 @@ class AwesomeHeater(ClimateDevice):
             self._current_operation = 'Locked (' + state + ')'
     
         self._current_temperature = self._nobo.get_current_zone_temperature(self._id)
+        if self._current_temperature == 'N/A':
+            self._current_temperature = -274
         self._target_temperature_high = int(self._nobo.zones[self._id]['temp_comfort_c'])
         self._target_temperature_low = int(self._nobo.zones[self._id]['temp_eco_c'])        
