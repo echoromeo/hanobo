@@ -10,13 +10,11 @@ import socket
 import threading
 import voluptuous as vol
 import homeassistant.util.dt as dt_util
-from homeassistant.components.climate import (PLATFORM_SCHEMA,
-    ClimateDevice, SUPPORT_OPERATION_MODE, 
-    ATTR_TARGET_TEMP_LOW, ATTR_TARGET_TEMP_HIGH,
-    SUPPORT_TARGET_TEMPERATURE_LOW, SUPPORT_TARGET_TEMPERATURE_HIGH,
-    STATE_ECO)
+from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
 from homeassistant.const import CONF_IP_ADDRESS, CONF_HOST, TEMP_CELSIUS, PRECISION_WHOLE
 import homeassistant.helpers.config_validation as cv
+from homeassistant.components.climate.const import (SUPPORT_OPERATION_MODE, ATTR_TARGET_TEMP_LOW, ATTR_TARGET_TEMP_HIGH, SUPPORT_TARGET_TEMPERATURE_LOW, SUPPORT_TARGET_TEMPERATURE_HIGH, STATE_ECO)
+from homeassistant.components.climate import ClimateDevice
 from .pynobo.nobo import nobo
 
 #REQUIREMENTS = ['time', 'warnings', 'logging', 'socket', 'threading']

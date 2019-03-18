@@ -10,7 +10,8 @@ The possible states are as following:
 
 To get started with this superexperimental implementation:
 
-* Download/clone the repo as [your HA folder]/custom_components/climate
+* git clone the repo as [your HA folder]/custom_components/nobo_hub
+  * you can download the zip as well, but then you have to download pynobo as well and unzip it to [your HA folder]/custom_components/nobo_hub/pynobo.
 * Add the following to your Home Assistant configuration file:
 
       # Nobø Energy Control
@@ -21,7 +22,7 @@ To get started with this superexperimental implementation:
 
 * Restart Home Assistant, you will get this warning:
 
-      WARNING (MainThread) [homeassistant.loader] You are using a custom component for climate.nobo_hub which has not been tested by Home Assistant. This component might cause stability problems, be sure to disable it if you do experience issues with Home Assistant.
+      WARNING (MainThread) [homeassistant.loader] You are using a custom component for nobo_hub.climate which has not been tested by Home Assistant. This component might cause stability problems, be sure to disable it if you do experience issues with Home Assistant.
 
 * Play around and figure out what does not work..
 
@@ -31,4 +32,4 @@ To get started with this superexperimental implementation:
       logger:
         default: warning
         logs:
-          custom_components.climate.nobo_hub: info
+          custom_components.nobo_hub.climate: debug
