@@ -1,0 +1,8 @@
+{
+    "domain": "nobo_hub",
+    "name": "nobo_hub",
+    "documentation": "https://github.com/echoromeo/hanobo",
+    "requirements": [],
+    "dependencies": [],
+    "codeowners": []
+  }
