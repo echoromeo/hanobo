@@ -10,8 +10,21 @@ The possible states are as following:
 
 To get started with this superexperimental implementation:
 
-* git clone the repo as [your HA folder]/custom_components/nobo_hub
-  * you can download the zip as well, but then you have to download pynobo as well and unzip it to [your HA folder]/custom_components/nobo_hub/pynobo.
+* Download the project one of the following ways to [HA config path]/custom_components/nobo_hub:
+  * git clone using ssh:
+
+        cd [HA config path]
+        git clone --recursive git@github.com:echoromeo/hanobo.git ./custom_components/nobo_hub
+
+  * git clone using https:
+
+        cd [HA config path]
+        git clone https://github.com/echoromeo/hanobo.git ./custom_components/nobo_hub
+        cd custom_components/nobo_hub
+        git config submodule.pynobo.url https://github.com/echoromeo/pynobo.git
+        git submodule update
+
+  * or you can download the zip, but then you have to download pynobo as well and unzip it to [HA config folder]/custom_components/nobo_hub/pynobo.
 * Add the following to your Home Assistant configuration file:
 
       # Nobø Energy Control
