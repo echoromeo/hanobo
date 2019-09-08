@@ -149,6 +149,10 @@ class AwesomeHeater(ClimateDevice):
         """Return the preset modes, comfort, away etc"""
         return PRESET_MODES
 
+    def set_hvac_mode(self, hvac_mode):
+        """Noop for the time being"""
+        hvac_mode = hvac_mode.lower()
+
     def set_preset_mode(self, operation_mode):
         """Set new zone override."""
         if self._nobo.zones[self._id]['override_allowed'] == '1':
