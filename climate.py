@@ -165,7 +165,7 @@ class AwesomeHeater(ClimateDevice):
         if self._nobo.zones[self._id]['override_allowed'] == '1':
             operation_mode = operation_mode.lower()
             mode = self._nobo.API.DICT_NAME_TO_OVERRIDE_MODE[operation_mode]
-            self._nobo.create_override(mode, self._nobo.API.OVERRIDE_TYPE_NOW, self._nobo.API.OVERRIDE_TARGET_ZONE, self._id)
+            self._nobo.create_override(mode, self._nobo.API.OVERRIDE_TYPE_CONSTANT, self._nobo.API.OVERRIDE_TARGET_ZONE, self._id)
             #TODO: override to program if new operation mode == current week profile status
         self.schedule_update_ha_state()
 
