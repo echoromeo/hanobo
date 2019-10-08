@@ -11,7 +11,7 @@ import threading
 import voluptuous as vol
 import homeassistant.util.dt as dt_util
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
-from homeassistant.const import CONF_IP_ADDRESS, CONF_HOST, TEMP_CELSIUS, PRECISION_WHOLE
+from homeassistant.const import CONF_IP_ADDRESS, CONF_HOST, TEMP_CELSIUS, PRECISION_WHOLE, PRECISION_TENTHS
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.climate.const import (HVAC_MODE_AUTO, ATTR_TARGET_TEMP_LOW, ATTR_TARGET_TEMP_HIGH, SUPPORT_TARGET_TEMPERATURE_RANGE, SUPPORT_PRESET_MODE)
 from homeassistant.components.climate import ClimateDevice
@@ -35,7 +35,7 @@ HVAC_MODES = [
 ]
 
 MIN_TEMPERATURE = 7
-MAX_TEMPERATURE = 30
+MAX_TEMPERATURE = 40
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -107,7 +107,7 @@ class AwesomeHeater(ClimateDevice):
     @property
     def precision(self):
         """Return the precision of the system."""
-        return PRECISION_WHOLE
+        return PRECISION_TENTHS #PRECISION_WHOLE
 
     @property
     def min_temp(self):
@@ -148,6 +148,13 @@ class AwesomeHeater(ClimateDevice):
     def preset_modes(self):
         """Return the preset modes, comfort, away etc"""
         return PRESET_MODES
+        
+    @property
+    def current_temperature(self):
+        """Return the current temperature."""
+        if self._current_temperature is not None:
+            return float(self._current_temperature)
+        return None
 
     def set_hvac_mode(self, hvac_mode):
         """Noop for the time being"""
@@ -189,5 +196,8 @@ class AwesomeHeater(ClimateDevice):
                         self._current_operation = state
         else:
             self._current_operation = 'Locked (' + state + ')'
+        self._current_temperature = self._nobo.get_current_zone_temperature(self._id)
+        if self._current_temperature == 'N/A':
+            self._current_temperature = None
         self._target_temperature_high = int(self._nobo.zones[self._id]['temp_comfort_c'])
         self._target_temperature_low = int(self._nobo.zones[self._id]['temp_eco_c'])        
