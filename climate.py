@@ -13,20 +13,25 @@ import homeassistant.util.dt as dt_util
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
 from homeassistant.const import CONF_IP_ADDRESS, CONF_HOST, TEMP_CELSIUS, PRECISION_WHOLE
 import homeassistant.helpers.config_validation as cv
-from homeassistant.components.climate.const import (SUPPORT_OPERATION_MODE, ATTR_TARGET_TEMP_LOW, ATTR_TARGET_TEMP_HIGH, SUPPORT_TARGET_TEMPERATURE_LOW, SUPPORT_TARGET_TEMPERATURE_HIGH, STATE_ECO)
+from homeassistant.components.climate.const import (HVAC_MODE_AUTO, ATTR_TARGET_TEMP_LOW, ATTR_TARGET_TEMP_HIGH, SUPPORT_TARGET_TEMPERATURE_RANGE, SUPPORT_PRESET_MODE)
 from homeassistant.components.climate import ClimateDevice
 from .pynobo.nobo import nobo
 
 #REQUIREMENTS = ['time', 'warnings', 'logging', 'socket', 'threading']
 
-SUPPORT_FLAGS = SUPPORT_OPERATION_MODE | SUPPORT_TARGET_TEMPERATURE_LOW | SUPPORT_TARGET_TEMPERATURE_HIGH
+SUPPORT_FLAGS = SUPPORT_PRESET_MODE | SUPPORT_TARGET_TEMPERATURE_RANGE
 
 STATE_AWAY = 'Away'
 STATE_COMFORT = 'Comfort'
 STATE_NORMAL = 'Normal'
+STATE_ECO = 'Eco'
 
-OP_MODES = [
+PRESET_MODES = [
     STATE_NORMAL, STATE_COMFORT, STATE_ECO, STATE_AWAY
+]
+
+HVAC_MODES = [
+    HVAC_MODE_AUTO
 ]
 
 MIN_TEMPERATURE = 7
@@ -125,16 +130,30 @@ class AwesomeHeater(ClimateDevice):
         return self._target_temperature_low
 
     @property
-    def operation_list(self):
+    def hvac_modes(self):
         """Return the list of available operation modes."""
-        return OP_MODES
+        return HVAC_MODES
 
     @property
-    def current_operation(self):
-        """Return current operation ie. program, eco, comfort, away."""
+    def hvac_mode(self):
+        """Return current operation HVAC Mode."""
+        return HVAC_MODE_AUTO
+
+    @property
+    def preset_mode(self):
+        """Return current preset mode"""
         return self._current_operation
 
-    def set_operation_mode(self, operation_mode):
+    @property
+    def preset_modes(self):
+        """Return the preset modes, comfort, away etc"""
+        return PRESET_MODES
+
+    def set_hvac_mode(self, hvac_mode):
+        """Noop for the time being"""
+        hvac_mode = hvac_mode.lower()
+
+    def set_preset_mode(self, operation_mode):
         """Set new zone override."""
         if self._nobo.zones[self._id]['override_allowed'] == '1':
             operation_mode = operation_mode.lower()
