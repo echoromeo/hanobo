@@ -13,7 +13,18 @@ import homeassistant.util.dt as dt_util
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
 from homeassistant.const import CONF_IP_ADDRESS, CONF_HOST, TEMP_CELSIUS, PRECISION_WHOLE, PRECISION_TENTHS
 import homeassistant.helpers.config_validation as cv
-from homeassistant.components.climate.const import (HVAC_MODE_AUTO, ATTR_TARGET_TEMP_LOW, ATTR_TARGET_TEMP_HIGH, SUPPORT_TARGET_TEMPERATURE_RANGE, SUPPORT_PRESET_MODE)
+from homeassistant.components.climate.const import (
+    HVAC_MODE_HEAT,
+    HVAC_MODE_AUTO,
+    HVAC_MODE_OFF,
+    ATTR_TARGET_TEMP_LOW,
+    ATTR_TARGET_TEMP_HIGH,
+    SUPPORT_TARGET_TEMPERATURE_RANGE,
+    SUPPORT_PRESET_MODE,
+    PRESET_ECO,
+    PRESET_AWAY,
+    PRESET_COMFORT
+)
 from homeassistant.components.climate import ClimateDevice
 from .pynobo.nobo import nobo
 
@@ -21,17 +32,12 @@ from .pynobo.nobo import nobo
 
 SUPPORT_FLAGS = SUPPORT_PRESET_MODE | SUPPORT_TARGET_TEMPERATURE_RANGE
 
-STATE_AWAY = 'Away'
-STATE_COMFORT = 'Comfort'
-STATE_NORMAL = 'Normal'
-STATE_ECO = 'Eco'
-
 PRESET_MODES = [
-    STATE_NORMAL, STATE_COMFORT, STATE_ECO, STATE_AWAY
+    PRESET_COMFORT, PRESET_ECO, PRESET_AWAY
 ]
 
 HVAC_MODES = [
-    HVAC_MODE_AUTO
+    HVAC_MODE_OFF, HVAC_MODE_HEAT, HVAC_MODE_AUTO
 ]
 
 MIN_TEMPERATURE = 7
@@ -75,6 +81,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
 
 class AwesomeHeater(ClimateDevice):
     """Representation of a demo climate device."""
+    _current_mode = HVAC_MODE_AUTO
 
     def __init__(self, id, hub):
         """Initialize the climate device."""
@@ -137,7 +144,7 @@ class AwesomeHeater(ClimateDevice):
     @property
     def hvac_mode(self):
         """Return current operation HVAC Mode."""
-        return HVAC_MODE_AUTO
+        return self._current_mode
 
     @property
     def preset_mode(self):
@@ -157,14 +164,24 @@ class AwesomeHeater(ClimateDevice):
         return None
 
     def set_hvac_mode(self, hvac_mode):
-        """Noop for the time being"""
-        hvac_mode = hvac_mode.lower()
+        if hvac_mode == HVAC_MODE_AUTO:
+            self.set_preset_mode(self._nobo.API.NAME_NORMAL)
+            self._current_mode = hvac_mode
+        elif hvac_mode == HVAC_MODE_HEAT:
+            self.set_preset_mode(self._nobo.API.NAME_COMFORT)
+            self._current_mode = hvac_mode
 
     def set_preset_mode(self, operation_mode):
         """Set new zone override."""
         if self._nobo.zones[self._id]['override_allowed'] == '1':
-            operation_mode = operation_mode.lower()
-            mode = self._nobo.API.DICT_NAME_TO_OVERRIDE_MODE[operation_mode]
+            if operation_mode == PRESET_ECO:
+                mode = self._nobo.API.OVERRIDE_MODE_ECO
+            elif operation_mode == PRESET_AWAY:
+                mode = self._nobo.API.OVERRIDE_MODE_AWAY
+            elif operation_mode == PRESET_COMFORT:
+                mode = self._nobo.API.OVERRIDE_MODE_COMFORT
+            else:
+                mode = self._nobo.API.OVERRIDE_MODE_NORMAL
             self._nobo.create_override(mode, self._nobo.API.OVERRIDE_TYPE_CONSTANT, self._nobo.API.OVERRIDE_TARGET_ZONE, self._id)
             #TODO: override to program if new operation mode == current week profile status
         self.schedule_update_ha_state()
@@ -186,16 +203,23 @@ class AwesomeHeater(ClimateDevice):
         This is the only method that should fetch new data for Home Assistant.
         """
         state = self._nobo.get_current_zone_mode(self._id, dt_util.as_local(dt_util.now()))
+        self._current_mode = HVAC_MODE_AUTO
+        if state == self._nobo.API.NAME_OFF:
+            self._current_mode = HVAC_MODE_OFF
+            self._current_operation = PRESET_AWAY
+        elif state == self._nobo.API.NAME_AWAY:
+            self._current_operation = PRESET_AWAY
+        elif state == self._nobo.API.NAME_ECO:
+            self._current_operation = PRESET_ECO
+        elif state == self._nobo.API.NAME_COMFORT:
+            self._current_operation = PRESET_COMFORT
         if self._nobo.zones[self._id]['override_allowed'] == '1':
-            self._current_operation = 'Normal (' + state + ')'
             for o in self._nobo.overrides:
                 if self._nobo.overrides[o]['mode'] == '0':
                     continue  # "normal" overrides
                 elif self._nobo.overrides[o]['target_type'] == self._nobo.API.OVERRIDE_TARGET_ZONE:
                     if self._nobo.overrides[o]['target_id'] == self._id:
-                        self._current_operation = state
-        else:
-            self._current_operation = 'Locked (' + state + ')'
+                        self._current_mode = HVAC_MODE_HEAT
         self._current_temperature = self._nobo.get_current_zone_temperature(self._id)
         if self._current_temperature == 'N/A':
             self._current_temperature = None
