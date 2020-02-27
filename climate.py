@@ -165,10 +165,10 @@ class AwesomeHeater(ClimateDevice):
 
     def set_hvac_mode(self, hvac_mode):
         if hvac_mode == HVAC_MODE_AUTO:
-            self.set_preset_mode(self._nobo.API.NAME_NORMAL)
+            self.set_preset_mode('')
             self._current_mode = hvac_mode
         elif hvac_mode == HVAC_MODE_HEAT:
-            self.set_preset_mode(self._nobo.API.NAME_COMFORT)
+            self.set_preset_mode(PRESET_COMFORT)
             self._current_mode = hvac_mode
 
     def set_preset_mode(self, operation_mode):
