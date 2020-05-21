@@ -26,7 +26,7 @@ from homeassistant.components.climate.const import (
     PRESET_AWAY,
     PRESET_COMFORT
 )
-from homeassistant.components.climate import ClimateDevice
+from homeassistant.components.climate import ClimateEntity
 from .pynobo.nobo import nobo
 
 #REQUIREMENTS = ['time', 'warnings', 'logging', 'socket', 'threading']
@@ -56,7 +56,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     """Setup the Awesome heater platform."""
 
     # Assign configuration variables. The configuration check takes care they are
-    # present. 
+    # present.
     host = config.get(CONF_HOST)
     ip = config.get(CONF_IP_ADDRESS)
 
@@ -80,7 +80,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
 
     return True
 
-class AwesomeHeater(ClimateDevice):
+class AwesomeHeater(ClimateEntity):
     """Representation of a demo climate device."""
 
     def __init__(self, id, hub):
@@ -156,7 +156,7 @@ class AwesomeHeater(ClimateDevice):
     def preset_modes(self):
         """Return the preset modes, comfort, away etc"""
         return PRESET_MODES
-        
+
     @property
     def current_temperature(self):
         """Return the current temperature."""
@@ -228,4 +228,4 @@ class AwesomeHeater(ClimateDevice):
         if self._current_temperature == 'N/A':
             self._current_temperature = None
         self._target_temperature_high = int(self._nobo.zones[self._id]['temp_comfort_c'])
-        self._target_temperature_low = int(self._nobo.zones[self._id]['temp_eco_c'])        
+        self._target_temperature_low = int(self._nobo.zones[self._id]['temp_eco_c'])
