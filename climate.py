@@ -26,8 +26,9 @@ from homeassistant.components.climate.const import (
     PRESET_AWAY,
     PRESET_COMFORT
 )
-from homeassistant.components.climate import ClimateEntity
-from .pynobo.nobo import nobo
+
+from homeassistant.components.climate import ClimateDevice
+from pynobo import nobo
 
 #REQUIREMENTS = ['time', 'warnings', 'logging', 'socket', 'threading']
 
@@ -225,7 +226,5 @@ class AwesomeHeater(ClimateEntity):
                         self._current_mode = HVAC_MODE_HEAT
 
         self._current_temperature = self._nobo.get_current_zone_temperature(self._id)
-        if self._current_temperature == 'N/A':
-            self._current_temperature = None
         self._target_temperature_high = int(self._nobo.zones[self._id]['temp_comfort_c'])
         self._target_temperature_low = int(self._nobo.zones[self._id]['temp_eco_c'])
