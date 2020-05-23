@@ -1,5 +1,5 @@
 # hanobo
-Home Assistant implementation of pynobo as a climate component
+Home Assistant implementation of [pynobo][pypi] as a climate component
 
 As for now you can see and change Operation and Preset for Zones and set eco/comfort temperatures if you have a supported thermostat.
 
@@ -15,21 +15,7 @@ This can be utilized the following ways:
 
 To get started with this superexperimental implementation:
 
-* Download the project one of the following ways to [HA config path]/custom_components/nobo_hub:
-  * git clone using ssh:
-
-        cd [HA config path]
-        git clone --recursive git@github.com:echoromeo/hanobo.git ./custom_components/nobo_hub
-
-  * git clone using https:
-
-        cd [HA config path]
-        git clone https://github.com/echoromeo/hanobo.git ./custom_components/nobo_hub
-        cd custom_components/nobo_hub
-        git config submodule.pynobo.url https://github.com/echoromeo/pynobo.git
-        git submodule update
-
-  * or you can download the zip, but then you have to download pynobo as well and unzip it to [HA config folder]/custom_components/nobo_hub/pynobo.
+* Clone or download the project to [HA config path]/custom_components/nobo_hub:
 * Add the following to your Home Assistant configuration file:
 
       # Nobø Energy Control
@@ -51,3 +37,5 @@ To get started with this superexperimental implementation:
         default: warning
         logs:
           custom_components.nobo_hub.climate: debug
+
+[pypi]: https://pypi.org/project/pynobo/
