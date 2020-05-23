@@ -27,7 +27,7 @@ from homeassistant.components.climate.const import (
     PRESET_COMFORT
 )
 
-from homeassistant.components.climate import ClimateDevice
+from homeassistant.components.climate import ClimateEntity
 from pynobo import nobo
 
 #REQUIREMENTS = ['time', 'warnings', 'logging', 'socket', 'threading']
