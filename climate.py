@@ -11,7 +11,7 @@ import threading
 import voluptuous as vol
 import homeassistant.util.dt as dt_util
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
-from homeassistant.const import CONF_IP_ADDRESS, CONF_HOST, TEMP_CELSIUS, PRECISION_TENTHS
+from homeassistant.const import CONF_IP_ADDRESS, CONF_HOST, CONF_COMMAND_OFF, CONF_COMMAND_ON, TEMP_CELSIUS, PRECISION_TENTHS
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.climate.const import (
     HVAC_MODE_HEAT,
@@ -41,17 +41,31 @@ PRESET_MODES = [
 HVAC_MODES = [
     HVAC_MODE_OFF, HVAC_MODE_HEAT, HVAC_MODE_AUTO
 ]
+HVAC_MODES_WITHOUT_OFF = [
+    HVAC_MODE_HEAT, HVAC_MODE_AUTO
+]
 
 MIN_TEMPERATURE = 7
 MAX_TEMPERATURE = 40
 
 _LOGGER = logging.getLogger(__name__)
 
+_ZONE_NORMAL_WEEK_LIST_SCHEMA = vol.Schema({cv.string: cv.string})
+
 # Validation of the user's configuration
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_HOST): cv.string,
     vol.Optional(CONF_IP_ADDRESS, default='discover'): cv.string,
+    vol.Optional(CONF_COMMAND_OFF, default=''): cv.string,
+    vol.Optional(CONF_COMMAND_ON, default=''): _ZONE_NORMAL_WEEK_LIST_SCHEMA,
 })
+
+def get_id_from_name(name, dictionary):
+    for key in dictionary.keys():
+        # Replace unicode non-breaking space (used in Nobø hub) with space
+        if dictionary[key]['name'].replace(u'\xa0', u' ') == name:
+            return key
+    return None
 
 def setup_platform(hass, config, add_devices, discovery_info=None):
     """Setup the Awesome heater platform."""
@@ -74,9 +88,41 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
 #        _LOGGER.error("Could not connect to AwesomeHeater hub")
 #        return False
 
+    # Find OFF command (week profile) to use for all zones:
+    command_off_name = config.get(CONF_COMMAND_OFF)
+    command_on_by_id = {} # By default, nothing can be turned on
+    if command_off_name == '':
+        _LOGGER.info("Not possible to turn off (or on) any heater, because OFF week profile was not specified")
+        command_off_id = None
+    else:
+        command_off_id = get_id_from_name(command_off_name, hub.week_profiles)
+        if command_off_id == '' or command_off_id == None:
+            _LOGGER.error("Can not turn off (or on) any heater, because week profile '%s' was not found", command_off_name)
+        else:
+            _LOGGER.info("To turn off any heater, week profile %s '%s' will be used", command_off_id, command_off_name)
+
+            # Find ON command (week profile) for the different zones:
+            command_on_dict = config.get(CONF_COMMAND_ON)
+            command_on_by_id = {}
+            if command_on_dict.keys().__len__ == 0:
+                _LOGGER.info("Not possible to turn on any heater, because ON week profile was not specified")
+            for room_name in command_on_dict.keys():
+                command_on_name = command_on_dict[room_name]
+                room_id = get_id_from_name(room_name, hub.zones)
+                if room_id == '' or room_id == None:
+                    _LOGGER.error("Can not turn on (or off) heater in zone '%s', because that zone (heater name) was not found", room_name)
+                else:
+                    command_on_id = get_id_from_name(command_on_name, hub.week_profiles)
+                    if command_on_id == '' or command_on_id == None:
+                        _LOGGER.error("Can not turn on (or off) heater in zone '%s', because week profile '%s' was not found", room_name, command_on_name)
+                    else:
+                        _LOGGER.info("To turn on heater %s '%s', week profile %s '%s' will be used", room_id, room_name, command_on_id, command_on_name)
+                        command_on_by_id[room_id] = command_on_id
+
+
     # Add devices
     hub.socket_received_all_info.wait()
-    add_devices(AwesomeHeater(zones, hub) for zones in hub.zones)
+    add_devices(AwesomeHeater(zones, hub, command_off_id, command_on_by_id.get(zones) ) for zones in hub.zones)
     _LOGGER.info("component is up and running on %s:%s", hub.hub_ip, hub.hub_serial)
 
     return True
@@ -84,12 +130,14 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
 class AwesomeHeater(ClimateEntity):
     """Representation of a demo climate device."""
 
-    def __init__(self, id, hub):
+    def __init__(self, id, hub, command_off_id, command_on_id):
         """Initialize the climate device."""
         self._id = id
         self._nobo = hub
         self._name = self._nobo.zones[self._id]['name']
         self._current_mode = HVAC_MODE_AUTO
+        self._command_off_id = command_off_id
+        self._command_on_id = command_on_id
 
         self.update()
 
@@ -141,7 +189,11 @@ class AwesomeHeater(ClimateEntity):
     @property
     def hvac_modes(self):
         """Return the list of available operation modes."""
-        return HVAC_MODES
+        # Only enable off-command if on- and off-command exists for this zone:
+        if self.can_turn_off():
+            return HVAC_MODES
+        else:
+            return HVAC_MODES_WITHOUT_OFF
 
     @property
     def hvac_mode(self):
@@ -173,6 +225,27 @@ class AwesomeHeater(ClimateEntity):
         elif hvac_mode == HVAC_MODE_HEAT:
             self.set_preset_mode(PRESET_COMFORT)
             self._current_mode = hvac_mode
+        
+        if self.can_turn_off():
+            if hvac_mode == HVAC_MODE_OFF:
+                self.set_preset_mode(PRESET_NONE)
+                self._current_mode = hvac_mode
+                self._nobo.update_zone(self._id, week_profile_id=self._command_off_id) # Change week profile to OFF
+                _LOGGER.debug("Turned off heater %s '%s' by switching to week profile %s", self._id, self._name, self._command_off_id)
+            else:
+                self._nobo.update_zone(self._id, week_profile_id=self._command_on_id) # # Change week profile to normal for this zone
+                _LOGGER.debug("Turned on heater %s '%s' by switching to week profile %s", self._id, self._name, self._command_on_id)
+            # When switching between AUTO and OFF an immediate update does not work (the nobø API seems to answer with old values), but it works if we add a short delay:
+            time.sleep(0.5)
+            self.schedule_update_ha_state()
+        elif hvac_mode == HVAC_MODE_OFF:
+            _LOGGER.error("User tried to turn off heater %s '%s', but this is not configured so this should be impossible.", self._id, self._name)
+
+    def can_turn_off(self):
+        """
+        Returns true if heater can turn off and on
+        """
+        return self._command_on_id != None and self._command_off_id != None
 
     def set_preset_mode(self, operation_mode):
         """Set new zone override."""
@@ -208,6 +281,7 @@ class AwesomeHeater(ClimateEntity):
         state = self._nobo.get_current_zone_mode(self._id, dt_util.as_local(dt_util.now()))
         self._current_mode = HVAC_MODE_AUTO
         self._current_operation = PRESET_NONE
+
         if state == self._nobo.API.NAME_OFF:
             self._current_mode = HVAC_MODE_OFF
         elif state == self._nobo.API.NAME_AWAY:
