@@ -57,7 +57,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_HOST): cv.string,
     vol.Optional(CONF_IP_ADDRESS, default='discover'): cv.string,
     vol.Optional(CONF_COMMAND_OFF, default=''): cv.string,
-    vol.Optional(CONF_COMMAND_ON, default=''): _ZONE_NORMAL_WEEK_LIST_SCHEMA,
+    vol.Optional(CONF_COMMAND_ON, default={}): _ZONE_NORMAL_WEEK_LIST_SCHEMA,
 })
 
 def get_id_from_name(name, dictionary):
