@@ -1,5 +1,5 @@
 {
-  "name": "Nobø integration",
+  "name": "Nobø Hub / Nobø Energy Control",
   "country": "NO",
   "domains": ["climate"],
   "render_readme": true,
