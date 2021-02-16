@@ -2,6 +2,8 @@
     "domain": "nobo_hub",
     "name": "Nobø Hub / Nobø Energy Control",
     "documentation": "https://github.com/echoromeo/hanobo",
+    "issue_tracker": "https://github.com/echoromeo/hanobo/issues",
     "requirements": ["pynobo>=1.1.2"],
+    "version": "1.1.2",
     "codeowners": []
   }
