@@ -41,7 +41,9 @@ Or watch gif at [https://hacs.xyz](https://hacs.xyz)
 To get started with this superexperimental implementation:
 
 1. Clone or download the project to [HA config path]/custom_components/nobo_hub:
-2. [Update configuration.yaml](#update-configuration)
+2. Go to directory - `cd [HA config path]/custom_components/nobo_hub`
+3. Move files - `mv custom_components/* .`
+4. [Update configuration.yaml](#update-configuration)
 
 ### Update configuration
 * Add the following to your Home Assistant configuration file:
