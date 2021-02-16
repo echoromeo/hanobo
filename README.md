@@ -25,11 +25,25 @@ If you tell hanobo the name of the "Off" week profile and the name for the norma
 
 If you don't configure any `command_off` or `command_on` then turning off heaters will not be supported (and this may be fine for your use).
 
-## How to use
+## How to use / Installation
 
+### Automaticly using HACS (Home Assistant Community Store)
+
+1. Go into HACS in the left menu
+2. Click Integration
+3. Click + (Explore and add repo) - Blue button in bottom right
+4. Search for "Nobø"
+5. [Update configuration.yaml](#update-configuration)
+
+Or watch gif at [https://hacs.xyz](https://hacs.xyz)
+
+### Or manually
 To get started with this superexperimental implementation:
 
-* Clone or download the project to [HA config path]/custom_components/nobo_hub:
+1. Clone or download the project to [HA config path]/custom_components/nobo_hub:
+2. [Update configuration.yaml](#update-configuration)
+
+### Update configuration
 * Add the following to your Home Assistant configuration file:
 
       # Nobø Energy Control
