@@ -1,0 +1,7 @@
+{
+  "name": "Nobø integration",
+  "country": "NO",
+  "domains": ["climate"],
+  "render_readme": true,
+  "iot_class": ["Local Polling"]
+}
