@@ -1,17 +1,22 @@
 """
-Python Websocet Control of Nobø Hub - Nobø Energy Control
+Python Control of Nobø Hub - Nobø Energy Control
 """
-import time
-import datetime
-import warnings
+from __future__ import annotations
+
+import asyncio
 import logging
-import collections
-import socket
-import threading
 import voluptuous as vol
 import homeassistant.util.dt as dt_util
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
-from homeassistant.const import CONF_IP_ADDRESS, CONF_HOST, CONF_COMMAND_OFF, CONF_COMMAND_ON, TEMP_CELSIUS, PRECISION_TENTHS
+from homeassistant.const import (
+    CONF_IP_ADDRESS,
+    CONF_HOST,
+    CONF_COMMAND_OFF,
+    CONF_COMMAND_ON,
+    EVENT_HOMEASSISTANT_STOP,
+    TEMP_CELSIUS,
+    PRECISION_TENTHS)
+from homeassistant.core import callback
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.climate.const import (
     HVAC_MODE_HEAT,
@@ -30,7 +35,7 @@ from homeassistant.components.climate.const import (
 from homeassistant.components.climate import ClimateEntity
 from pynobo import nobo
 
-#REQUIREMENTS = ['time', 'warnings', 'logging', 'socket', 'threading']
+#REQUIREMENTS = ['time', 'warnings', 'logging']
 
 SUPPORT_FLAGS = SUPPORT_PRESET_MODE | SUPPORT_TARGET_TEMPERATURE_RANGE
 
@@ -62,13 +67,13 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
 
 def get_id_from_name(name, dictionary):
     for key in dictionary.keys():
-        # Replace unicode non-breaking space (used in Nobø hub) with space
+        # Replace unicode non-breaking space (used in Nobø Ecohub) with space
         if dictionary[key]['name'].replace(u'\xa0', u' ') == name:
             return key
     return None
 
-def setup_platform(hass, config, add_devices, discovery_info=None):
-    """Setup the Awesome heater platform."""
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
+    """Setup the Nobø Ecohub platform."""
 
     # Assign configuration variables. The configuration check takes care they are
     # present.
@@ -78,15 +83,12 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     # Setup connection with devices/cloud
     if ip == 'discover':
         _LOGGER.info("discovering and connecting to %s", host)
-        hub = nobo(serial=host)
+        hub = nobo(serial=host, loop=hass.loop)
     else:
         _LOGGER.info("connecting to %s:%s", ip, host)
-        hub = nobo(serial=host, ip=ip, discover=False)
+        hub = nobo(serial=host, ip=ip, discover=False, loop=hass.loop)
 
-    # Verify that passed in configuration works
-#    if not hub.is_valid_login():
-#        _LOGGER.error("Could not connect to AwesomeHeater hub")
-#        return False
+    await hub.start()
 
     # Find OFF command (week profile) to use for all zones:
     command_off_name = config.get(CONF_COMMAND_OFF)
@@ -119,18 +121,18 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
                         _LOGGER.info("To turn on heater %s '%s', week profile %s '%s' will be used", room_id, room_name, command_on_id, command_on_name)
                         command_on_by_id[room_id] = command_on_id
 
-
     # Add devices
-    hub.socket_received_all_info.wait()
-    add_devices(AwesomeHeater(zones, hub, command_off_id, command_on_by_id.get(zones) ) for zones in hub.zones)
+    async_add_entities(NoboZone(zones, hub, command_off_id, command_on_by_id.get(zones)) for zones in hub.zones)
     _LOGGER.info("component is up and running on %s:%s", hub.hub_ip, hub.hub_serial)
+
+    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, hub.stop)
 
     return True
 
-class AwesomeHeater(ClimateEntity):
-    """Representation of a demo climate device."""
+class NoboZone(ClimateEntity):
+    """Representation of a Nobø Zone. A Nobø Zone consists of a group of physical devices that are controlled as a unity."""
 
-    def __init__(self, id, hub, command_off_id, command_on_id):
+    def __init__(self, id, hub: nobo, command_off_id, command_on_id):
         """Initialize the climate device."""
         self._id = id
         self._nobo = hub
@@ -139,7 +141,10 @@ class AwesomeHeater(ClimateEntity):
         self._command_off_id = command_off_id
         self._command_on_id = command_on_id
 
+        # Register for callbacks before initial update to avoid race condition.
+        self._nobo.register_callback(self._after_update)
         self.update()
+
 
     @property
     def supported_features(self):
@@ -149,7 +154,7 @@ class AwesomeHeater(ClimateEntity):
     @property
     def should_poll(self):
         """Return the polling state."""
-        return True
+        return False
 
     @property
     def name(self):
@@ -217,29 +222,28 @@ class AwesomeHeater(ClimateEntity):
             return float(self._current_temperature)
         return None
 
-    def set_hvac_mode(self, hvac_mode):
+    async def async_set_hvac_mode(self, hvac_mode):
         """Set HVAC mode to comfort(HEAT) or back to normal(AUTO)"""
         if hvac_mode == HVAC_MODE_AUTO:
-            self.set_preset_mode(PRESET_NONE)
+            await self.async_set_preset_mode(PRESET_NONE)
             self._current_mode = hvac_mode
         elif hvac_mode == HVAC_MODE_HEAT:
-            self.set_preset_mode(PRESET_COMFORT)
+            await self.async_set_preset_mode(PRESET_COMFORT)
             self._current_mode = hvac_mode
-        
+
         if self.can_turn_off():
             if hvac_mode == HVAC_MODE_OFF:
-                self.set_preset_mode(PRESET_NONE)
+                await self.async_set_preset_mode(PRESET_NONE)
                 self._current_mode = hvac_mode
-                self._nobo.update_zone(self._id, week_profile_id=self._command_off_id) # Change week profile to OFF
+                await self._nobo.update_zone(self._id, week_profile_id=self._command_off_id) # Change week profile to OFF
                 _LOGGER.debug("Turned off heater %s '%s' by switching to week profile %s", self._id, self._name, self._command_off_id)
             else:
-                self._nobo.update_zone(self._id, week_profile_id=self._command_on_id) # # Change week profile to normal for this zone
+                await self._nobo.update_zone(self._id, week_profile_id=self._command_on_id) # # Change week profile to normal for this zone
                 _LOGGER.debug("Turned on heater %s '%s' by switching to week profile %s", self._id, self._name, self._command_on_id)
             # When switching between AUTO and OFF an immediate update does not work (the nobø API seems to answer with old values), but it works if we add a short delay:
-            time.sleep(0.5)
-            self.schedule_update_ha_state()
+            await asyncio.sleep(0.5)
         elif hvac_mode == HVAC_MODE_OFF:
-            _LOGGER.error("User tried to turn off heater %s '%s', but this is not configured so this should be impossible.", self._id, self._name)
+            _LOGGER.error("User tried to turn off zone %s '%s', but this is not configured so this should be impossible.", self._id, self._name)
 
     def can_turn_off(self):
         """
@@ -247,22 +251,21 @@ class AwesomeHeater(ClimateEntity):
         """
         return self._command_on_id != None and self._command_off_id != None
 
-    def set_preset_mode(self, operation_mode):
+    async def async_set_preset_mode(self, preset_mode):
         """Set new zone override."""
         if self._nobo.zones[self._id]['override_allowed'] == '1':
-            if operation_mode == PRESET_ECO:
+            if preset_mode == PRESET_ECO:
                 mode = self._nobo.API.OVERRIDE_MODE_ECO
-            elif operation_mode == PRESET_AWAY:
+            elif preset_mode == PRESET_AWAY:
                 mode = self._nobo.API.OVERRIDE_MODE_AWAY
-            elif operation_mode == PRESET_COMFORT:
+            elif preset_mode == PRESET_COMFORT:
                 mode = self._nobo.API.OVERRIDE_MODE_COMFORT
             else: #PRESET_NONE
                 mode = self._nobo.API.OVERRIDE_MODE_NORMAL
-            self._nobo.create_override(mode, self._nobo.API.OVERRIDE_TYPE_CONSTANT, self._nobo.API.OVERRIDE_TARGET_ZONE, self._id)
+            await self._nobo.create_override(mode, self._nobo.API.OVERRIDE_TYPE_CONSTANT, self._nobo.API.OVERRIDE_TARGET_ZONE, self._id)
             #TODO: override to program if new operation mode == current week profile status
-        self.schedule_update_ha_state()
 
-    def set_temperature(self, **kwargs):
+    async def async_set_temperature(self, **kwargs):
         """Set new target temperature."""
         low = int(kwargs.get(ATTR_TARGET_TEMP_LOW))
         high = int(kwargs.get(ATTR_TARGET_TEMP_HIGH))
@@ -270,14 +273,11 @@ class AwesomeHeater(ClimateEntity):
             low = int(self._nobo.zones[self._id]['temp_comfort_c'])
         if high < int(self._nobo.zones[self._id]['temp_eco_c']):
             high = int(self._nobo.zones[self._id]['temp_eco_c'])
-        self._nobo.update_zone(self._id, temp_comfort_c=high, temp_eco_c=low)
-        self.schedule_update_ha_state()
+        await self._nobo.update_zone(self._id, temp_comfort_c=high, temp_eco_c=low)
 
+    @callback
     def update(self):
-        """Fetch new state data for this zone.
-
-        This is the only method that should fetch new data for Home Assistant.
-        """
+        """Fetch new state data for this zone."""
         state = self._nobo.get_current_zone_mode(self._id, dt_util.as_local(dt_util.now()))
         self._current_mode = HVAC_MODE_AUTO
         self._current_operation = PRESET_NONE
@@ -302,3 +302,8 @@ class AwesomeHeater(ClimateEntity):
         self._current_temperature = self._nobo.get_current_zone_temperature(self._id)
         self._target_temperature_high = int(self._nobo.zones[self._id]['temp_comfort_c'])
         self._target_temperature_low = int(self._nobo.zones[self._id]['temp_eco_c'])
+
+    @callback
+    def _after_update(self, hub):
+        self.update()
+        self.async_schedule_update_ha_state()
