@@ -6,8 +6,10 @@ from __future__ import annotations
 import asyncio
 import logging
 import voluptuous as vol
-import homeassistant.util.dt as dt_util
-from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
+
+from homeassistant import config_entries
+from homeassistant.components.climate import ClimateEntity
+from homeassistant.core import HomeAssistant
 from homeassistant.const import (
     CONF_IP_ADDRESS,
     CONF_HOST,
@@ -31,11 +33,12 @@ from homeassistant.components.climate.const import (
     PRESET_AWAY,
     PRESET_COMFORT
 )
+import homeassistant.util.dt as dt_util
 
-from homeassistant.components.climate import ClimateEntity
-from pynobo import nobo
+from .const import DOMAIN
 
-#REQUIREMENTS = ['time', 'warnings', 'logging']
+#from pynobo import nobo
+from .pynobo import nobo
 
 SUPPORT_FLAGS = SUPPORT_PRESET_MODE | SUPPORT_TARGET_TEMPERATURE_RANGE
 
@@ -58,7 +61,7 @@ _LOGGER = logging.getLogger(__name__)
 _ZONE_NORMAL_WEEK_LIST_SCHEMA = vol.Schema({cv.string: cv.string})
 
 # Validation of the user's configuration
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
+PLATFORM_SCHEMA = cv.PLATFORM_SCHEMA.extend({
     vol.Required(CONF_HOST): cv.string,
     vol.Optional(CONF_IP_ADDRESS, default='discover'): cv.string,
     vol.Optional(CONF_COMMAND_OFF, default=''): cv.string,
@@ -72,26 +75,20 @@ def get_id_from_name(name, dictionary):
             return key
     return None
 
-async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
-    """Setup the Nobø Ecohub platform."""
+#async def async_setup_platform(hass: HomeAssistant, config, async_add_entities, discovery_info=None):
+#    """Setup the Nobø Ecohub platform."""
 
+
+async def async_setup_entry(hass: HomeAssistant, config_entry: config_entries.ConfigEntry, async_add_devices):
     # Assign configuration variables. The configuration check takes care they are
     # present.
-    host = config.get(CONF_HOST)
-    ip = config.get(CONF_IP_ADDRESS)
 
-    # Setup connection with devices/cloud
-    if ip == 'discover':
-        _LOGGER.info("discovering and connecting to %s", host)
-        hub = nobo(serial=host, loop=hass.loop)
-    else:
-        _LOGGER.info("connecting to %s:%s", ip, host)
-        hub = nobo(serial=host, ip=ip, discover=False, loop=hass.loop)
-
+    # Setup connection with hub
+    hub = hass.data[DOMAIN][config_entry.entry_id]
     await hub.start()
 
     # Find OFF command (week profile) to use for all zones:
-    command_off_name = config.get(CONF_COMMAND_OFF)
+    command_off_name = config_entry.data.get(CONF_COMMAND_OFF)
     command_on_by_id = {} # By default, nothing can be turned on
     if command_off_name == '':
         _LOGGER.info("Not possible to turn off (or on) any heater, because OFF week profile was not specified")
@@ -104,7 +101,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
             _LOGGER.info("To turn off any heater, week profile %s '%s' will be used", command_off_id, command_off_name)
 
             # Find ON command (week profile) for the different zones:
-            command_on_dict = config.get(CONF_COMMAND_ON)
+            command_on_dict = config_entry.data.get(CONF_COMMAND_ON)
             command_on_by_id = {}
             if command_on_dict.keys().__len__ == 0:
                 _LOGGER.info("Not possible to turn on any heater, because ON week profile was not specified")
@@ -122,7 +119,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
                         command_on_by_id[room_id] = command_on_id
 
     # Add devices
-    async_add_entities(NoboZone(zones, hub, command_off_id, command_on_by_id.get(zones)) for zones in hub.zones)
+    async_add_devices(NoboZone(zones, hub, command_off_id, command_on_by_id.get(zones)) for zones in hub.zones)
     _LOGGER.info("component is up and running on %s:%s", hub.hub_ip, hub.hub_serial)
 
     hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, hub.stop)
@@ -136,6 +133,7 @@ class NoboZone(ClimateEntity):
         """Initialize the climate device."""
         self._id = id
         self._nobo = hub
+        self._unique_id = hub.hub_serial + ":" + id
         self._name = self._nobo.zones[self._id]['name']
         self._current_mode = HVAC_MODE_AUTO
         self._command_off_id = command_off_id
@@ -145,6 +143,10 @@ class NoboZone(ClimateEntity):
         self._nobo.register_callback(self._after_update)
         self.update()
 
+    @property
+    def unique_id(self) -> str:
+        """Return a unique ID."""
+        return self._unique_id
 
     @property
     def supported_features(self):
@@ -235,12 +237,12 @@ class NoboZone(ClimateEntity):
             if hvac_mode == HVAC_MODE_OFF:
                 await self.async_set_preset_mode(PRESET_NONE)
                 self._current_mode = hvac_mode
-                await self._nobo.update_zone(self._id, week_profile_id=self._command_off_id) # Change week profile to OFF
+                await self._nobo.async_update_zone(self._id, week_profile_id=self._command_off_id) # Change week profile to OFF
                 _LOGGER.debug("Turned off heater %s '%s' by switching to week profile %s", self._id, self._name, self._command_off_id)
             else:
-                await self._nobo.update_zone(self._id, week_profile_id=self._command_on_id) # # Change week profile to normal for this zone
+                await self._nobo.async_update_zone(self._id, week_profile_id=self._command_on_id) # Change week profile to normal for this zone
                 _LOGGER.debug("Turned on heater %s '%s' by switching to week profile %s", self._id, self._name, self._command_on_id)
-            # When switching between AUTO and OFF an immediate update does not work (the nobø API seems to answer with old values), but it works if we add a short delay:
+            # When switching between AUTO and OFF an immediate update does not work (the Nobø API seems to answer with old values), but it works if we add a short delay:
             await asyncio.sleep(0.5)
         elif hvac_mode == HVAC_MODE_OFF:
             _LOGGER.error("User tried to turn off zone %s '%s', but this is not configured so this should be impossible.", self._id, self._name)
@@ -262,7 +264,7 @@ class NoboZone(ClimateEntity):
                 mode = self._nobo.API.OVERRIDE_MODE_COMFORT
             else: #PRESET_NONE
                 mode = self._nobo.API.OVERRIDE_MODE_NORMAL
-            await self._nobo.create_override(mode, self._nobo.API.OVERRIDE_TYPE_CONSTANT, self._nobo.API.OVERRIDE_TARGET_ZONE, self._id)
+            await self._nobo.async_create_override(mode, self._nobo.API.OVERRIDE_TYPE_CONSTANT, self._nobo.API.OVERRIDE_TARGET_ZONE, self._id)
             #TODO: override to program if new operation mode == current week profile status
 
     async def async_set_temperature(self, **kwargs):
@@ -273,7 +275,7 @@ class NoboZone(ClimateEntity):
             low = int(self._nobo.zones[self._id]['temp_comfort_c'])
         if high < int(self._nobo.zones[self._id]['temp_eco_c']):
             high = int(self._nobo.zones[self._id]['temp_eco_c'])
-        await self._nobo.update_zone(self._id, temp_comfort_c=high, temp_eco_c=low)
+        await self._nobo.async_update_zone(self._id, temp_comfort_c=high, temp_eco_c=low)
 
     @callback
     def update(self):
