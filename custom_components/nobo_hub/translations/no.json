@@ -1,28 +1,22 @@
 {
     "config": {
         "abort": {
-            "already_configured_device": "Enheten er allerede konfigurert",
-            "already_in_progress": "Konfigurasjonsflyten pågår allerede",
-            "no_devices_found": "Ingen enheter funnet på nettverket",
-            "unknown": "Uventet feil"
+            "already_configured": "Enheten er allerede konfigurert"
         },
         "error": {
-            "already_configured": "Enheten er allerede konfigurert",
-            "no_devices_found": "Ingen enheter funnet på nettverket",
+            "cannot_connect": "Tilkobling mislyktes",
+            "invalid_ip": "Ugyldig IP-adresse",
+            "invalid_serial": "Ugyldig serienummer",
             "unknown": "Uventet feil"
         },
-        "flow_title": "Nobø Ecohub",
         "step": {
             "user": {
                 "data": {
-                    "device_input": "Enhet"
+                    "serial": "Serienummer",
+                    "ip_address": "IP-addresse"
                 },
-                "description": "Start med å skrive inn hele serienummeret (12 sifre) til de Nobø Echohuben du vil legge til. Hvis du har mer enn én hub, og de har samme serienummer-prefix, må du også spesifisere IP-adressen. Hvis noen enheter ble funnet automatisk p\u00e5 nettverket ditt, vises de nedenfor.\n\nHvis du ikke kan se enheten eller oppleve problemer, kan du prøve å angi enhetens IP-adresse.\n\n{devices}",
-                "title": "Konfigurere en ny Nobø Ecohub"
-            },
-            "confirm": {
-                "description": "Du er i ferd med å legge til Nobø Ecohub \"{name}\" med serienummer {serial} i Home Assistant.",
-                "title": "Bekreft at du legger til Nobø Ecohub"
+                "description": "Start med å skrive inn hele serienummeret (12 sifre) til de Nobø Echohuben du vil legge til. Hvis du har mer enn én hub, og de har samme serienummer-prefix, må du også spesifisere IP-adressen. Hvis noen enheter ble funnet automatisk på nettverket ditt, vises de nedenfor.\n\nHvis du ikke kan se enheten eller oppleve problemer, kan du prøve å angi enhetens IP-adresse.\n\n{devices}",
+                "title": "Nob\u00f8 Ecohub"
             }
         }
     },
@@ -46,9 +40,26 @@
                     "command_on_zone_13": "Normal ukesprofil for sone 13",
                     "command_on_zone_14": "Normal ukesprofil for sone 14",
                     "command_on_zone_15": "Normal ukesprofil for sone 15",
-                    "command_on_zone_16": "Normal ukesprofil for sone 16"
+                    "command_on_zone_16": "Normal ukesprofil for sone 16",
+                    "command_on_zone_17": "Normal ukesprofil for sone 17",
+                    "command_on_zone_18": "Normal ukesprofil for sone 18",
+                    "command_on_zone_19": "Normal ukesprofil for sone 19",
+                    "command_on_zone_20": "Normal ukesprofil for sone 20",
+                    "command_on_zone_21": "Normal ukesprofil for sone 21",
+                    "command_on_zone_22": "Normal ukesprofil for sone 22",
+                    "command_on_zone_23": "Normal ukesprofil for sone 23",
+                    "command_on_zone_24": "Normal ukesprofil for sone 24",
+                    "command_on_zone_25": "Normal ukesprofil for sone 25",
+                    "command_on_zone_26": "Normal ukesprofil for sone 26",
+                    "command_on_zone_27": "Normal ukesprofil for sone 27",
+                    "command_on_zone_28": "Normal ukesprofil for sone 28",
+                    "command_on_zone_29": "Normal ukesprofil for sone 29",
+                    "command_on_zone_30": "Normal ukesprofil for sone 30",
+                    "command_on_zone_31": "Normal ukesprofil for sone 31",
+                    "command_on_zone_32": "Normal ukesprofil for sone 32"
                 },
                 "description": "Sett ukesprofiler for av og på. Soner:\n\n{zones}"
+
             }
         }
     },

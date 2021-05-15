@@ -1,7 +1,7 @@
 {
-  "name": "Nobø Hub / Nobø Energy Control",
+  "name": "Nobø Ecohub / Nobø Energy Control",
   "country": "NO",
   "domains": ["climate"],
   "render_readme": true,
-  "iot_class": ["Local Polling"]
+  "iot_class": ["Local Push"]
 }
