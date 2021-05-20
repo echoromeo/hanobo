@@ -51,6 +51,7 @@ _LOGGER = logging.getLogger(__name__)
 
 _ZONE_NORMAL_WEEK_LIST_SCHEMA = vol.Schema({cv.string: cv.string})
 
+# For backwards compatibility of HACS version.
 PLATFORM_SCHEMA = cv.PLATFORM_SCHEMA.extend(
     {
         vol.Required(CONF_HOST): cv.string,
@@ -64,11 +65,7 @@ PLATFORM_SCHEMA = cv.PLATFORM_SCHEMA.extend(
 async def async_setup_platform(
     hass: HomeAssistant, config, async_add_entities, discovery_info=None
 ) -> bool:
-    """
-    Set up the Nobø Ecohub platform from configuration.yaml.
-
-    For backwards compatibility of HACS version.
-    """
+    """Set up the Nobø Ecohub platform from configuration.yaml."""
 
     serial = config.get(CONF_HOST)
     ip = config.get(CONF_IP_ADDRESS)
@@ -78,9 +75,7 @@ async def async_setup_platform(
     else:
         _LOGGER.debug("connecting to %s:%s", ip, serial)
         hub = nobo(serial=serial, ip=ip, discover=False)
-    await _setup(hass, config, async_add_entities, hub)
-
-    return True
+    return await _setup(hass, config, async_add_entities, hub)
 
 
 async def async_setup_entry(
@@ -90,9 +85,7 @@ async def async_setup_entry(
 
     # Setup connection with hub
     hub = hass.data[DOMAIN][config_entry.entry_id][HUB]
-    await _setup(hass, config_entry.options, async_add_devices, hub)
-
-    return True
+    return await _setup(hass, config_entry.options, async_add_devices, hub)
 
 
 async def _setup(
@@ -100,7 +93,7 @@ async def _setup(
     options,
     async_add_devices,
     hub: nobo,
-):
+) -> bool:
     await hub.start()
 
     # Find OFF command (week profile) to use for all zones:
@@ -319,7 +312,7 @@ class NoboZone(ClimateEntity):
                 self._name,
             )
 
-    def can_turn_off(self):
+    def can_turn_off(self) -> bool:
         """Return true if heater can turn off and on."""
         return self._command_on_id is not None and self._command_off_id is not None
 

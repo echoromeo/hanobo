@@ -21,6 +21,7 @@ DEVICE_INPUT = "device_input"
 
 _LOGGER = logging.getLogger(__name__)
 
+@config_entries.HANDLERS.register(DOMAIN)
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Nobø Ecohub."""
@@ -76,7 +77,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             except InvalidIP:
                 errors["base"] = "invalid_ip"
             except DeviceNotFound:
-                errors["base"] = "no_devices_found"
+                errors["base"] = "device_not_found"
             except CannotConnect:
                 errors["base"] = "cannot_connect"
 
