@@ -10,7 +10,6 @@ import voluptuous as vol
 
 from homeassistant import config_entries
 from homeassistant.core import callback
-from homeassistant.data_entry_flow import FlowResult
 
 from homeassistant.const import CONF_COMMAND_OFF, CONF_COMMAND_ON, CONF_IP_ADDRESS
 from homeassistant.exceptions import HomeAssistantError
@@ -34,7 +33,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ):
         """Handle the initial step."""
         if self.discovered_hubs is None:
             self.discovered_hubs = await nobo.async_discover_hubs(loop=self.hass.loop)

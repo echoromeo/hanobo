@@ -11,7 +11,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.const import CONF_IP_ADDRESS
 from .const import CONF_SERIAL, DOMAIN, HUB, UNSUBSCRIBE
 
-PLATFORMS = ["climate"]
+PLATFORM = "climate"
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = {HUB: hub}
 
-    hass.config_entries.async_setup_platforms(entry, PLATFORMS)
+    hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, PLATFORM))
 
     unsubscribe = entry.add_update_listener(options_update_listener)
     hass.data[DOMAIN][entry.entry_id][UNSUBSCRIBE] = unsubscribe
@@ -48,7 +48,9 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     ip_address = entry.data.get(CONF_IP_ADDRESS)
     name = entry.title
     await hub.stop()
-    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+
+    unload_ok = await hass.config_entries.async_forward_entry_unload(entry, PLATFORM)
+
     if unload_ok:
         hass.data[DOMAIN][entry.entry_id][UNSUBSCRIBE]()
         hass.data[DOMAIN].pop(entry.entry_id)
