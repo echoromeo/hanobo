@@ -5,7 +5,7 @@
   "documentation": "https://github.com/echoromeo/hanobo",
   "issue_tracker": "https://github.com/echoromeo/hanobo/issues",
   "requirements": [
-    "pynobo==1.2.0"
+    "pynobo>=1.2.0,<2.0"
   ],
   "version": "1.2.0",
   "codeowners": [
