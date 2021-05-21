@@ -12,8 +12,8 @@ from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
 
-from ...const import CONF_COMMAND_OFF, CONF_COMMAND_ON, CONF_IP_ADDRESS
-from ...exceptions import HomeAssistantError
+from homeassistant.const import CONF_COMMAND_OFF, CONF_COMMAND_ON, CONF_IP_ADDRESS
+from homeassistant.exceptions import HomeAssistantError
 from .const import CONF_SERIAL, DOMAIN, HUB
 
 DATA_NOBO_HUB_IMPL = "nobo_hub_flow_implementation"
@@ -22,7 +22,6 @@ DEVICE_INPUT = "device_input"
 _LOGGER = logging.getLogger(__name__)
 
 @config_entries.HANDLERS.register(DOMAIN)
-
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Nobø Ecohub."""
 

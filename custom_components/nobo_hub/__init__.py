@@ -8,7 +8,7 @@ from pynobo import nobo
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
-from ...const import CONF_IP_ADDRESS
+from homeassistant.const import CONF_IP_ADDRESS
 from .const import CONF_SERIAL, DOMAIN, HUB, UNSUBSCRIBE
 
 PLATFORMS = ["climate"]
