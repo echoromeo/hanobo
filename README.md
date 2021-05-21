@@ -49,7 +49,7 @@ To get started with this superexperimental implementation:
       WARNING (MainThread) [homeassistant.loader] You are using a custom component for nobo_hub.climate which has not been tested by Home Assistant. This component might cause stability problems, be sure to disable it if you do experience issues with Home Assistant.
 
 * You can now add "Nobø Ecohub" as an integration in the Home Assistant UI.
-** Week profiles for "off" and "on" settings are set as options in the UI.
+  * Week profiles for "off" and "on" settings are set as options in the UI.
   
 * Play around and figure out what does not work..
 
@@ -60,6 +60,7 @@ To get started with this superexperimental implementation:
         default: warning
         logs:
           custom_components.nobo_hub.climate: debug
+          pynobo: debug
 
 * Configuring using `configuration.yaml` is supported for backwards compatibility:
 
@@ -72,5 +73,7 @@ To get started with this superexperimental implementation:
           # command_on: # Uncomment these if you want to enable the completely off setting, one line for each zone you want to allow bypassing the 7 degrees Away setting
           #   [zone name:return week profile name] 
           #   [zone name:return week profile name]
+
+* **Note:** _Do not_ configure with both `configuration.yaml` *and* using the UI!
 
 [pypi]: https://pypi.org/project/pynobo/
