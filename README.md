@@ -49,7 +49,7 @@ To get started with this superexperimental implementation:
       WARNING (MainThread) [homeassistant.loader] You are using a custom component for nobo_hub.climate which has not been tested by Home Assistant. This component might cause stability problems, be sure to disable it if you do experience issues with Home Assistant.
 
 * You can now add "Nobø Ecohub" as an integration in the Home Assistant UI.
-  * Week profiles for "off" and "on" settings are set as options in the UI.
+  * Week profiles for "off" and "on" settings are set as options in the UI using the "Configure" button on the integration.
   
 * Play around and figure out what does not work..
 
@@ -62,18 +62,15 @@ To get started with this superexperimental implementation:
           custom_components.nobo_hub.climate: debug
           pynobo: debug
 
-* Configuring using `configuration.yaml` is supported for backwards compatibility:
+#### Importing from `configuration.yaml`
 
-      # Nobø Energy Control
-      climate: 
-        - platform: nobo_hub
-          host: [your nobø serial] # You can use the 3 last digits if using discovery
-          # ip_address: [your nobø ip] # Uncomment if you do not want discovery
-          # command_off: [your completely off week profile name] # Uncomment if you want to enable the completely off setting (bypassing the 7 degrees Away setting)
-          # command_on: # Uncomment these if you want to enable the completely off setting, one line for each zone you want to allow bypassing the 7 degrees Away setting
-          #   [zone name:return week profile name] 
-          #   [zone name:return week profile name]
+If you have previously configured `nobo_hub` in `configuration.yaml` you will see the following warnings in the log:
 
-* **Note:** _Do not_ configure with both `configuration.yaml` *and* using the UI!
+    WARNING (MainThread) [custom_components.nobo_hub.climate] Loading Nobø Ecohub via platform setup is depreciated; Please remove it from your configuration
+    WARNING (MainThread) [custom_components.nobo_hub.climate] Importing Nobø Ecohub configuration from configuration.yaml
+
+Verify that the configuration is successfully imported by going to "Configuration" -> "Integrations" in the Home Assistant UI.
+There you should see your Nobø Ecohub. Go to "Configure" to verify the off and on commands.
+You may now remove the configuration from configuration.yaml. No restart is required.
 
 [pypi]: https://pypi.org/project/pynobo/
