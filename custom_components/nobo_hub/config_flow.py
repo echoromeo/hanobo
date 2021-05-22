@@ -11,7 +11,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
 
-from homeassistant.const import CONF_COMMAND_OFF, CONF_COMMAND_ON, CONF_IP_ADDRESS
+from homeassistant.const import CONF_COMMAND_OFF, CONF_COMMAND_ON, CONF_IP_ADDRESS, CONF_NAME, CONF_HOST
 from homeassistant.exceptions import HomeAssistantError
 from .const import CONF_SERIAL, DOMAIN, HUB
 
@@ -30,6 +30,32 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     def __init__(self):
         """Initialize the config flow."""
         self.discovered_hubs = None
+
+
+    async def async_step_import(self, config: dict):
+        """Import a configuration from config.yaml."""
+
+        serial = config.get(CONF_HOST)
+        ip_address = config.get(CONF_IP_ADDRESS)
+        if ip_address == "discover":
+            ip_address = None
+
+        if len(serial) == 3:
+            # For the new config we always store the entire serial number.
+            discovered_hubs = await nobo.async_discover_hubs(serial, ip_address)
+            if discovered_hubs:
+                (_, serial) = discovered_hubs.pop()
+
+        user_input = {
+            CONF_SERIAL: serial,
+            CONF_IP_ADDRESS: ip_address,
+            CONF_COMMAND_OFF: config.get(CONF_COMMAND_OFF),
+            CONF_COMMAND_ON: config.get(CONF_COMMAND_ON),
+        }
+
+        self.context.update({"title_placeholders": {CONF_NAME: f"YAML import {DOMAIN}"}})
+        return await self.async_step_user(user_input=user_input)
+
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
