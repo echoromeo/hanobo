@@ -48,11 +48,31 @@ To get started with this superexperimental implementation:
 ### Update configuration
 * Add the following to your Home Assistant configuration file:
 
+With discovery:
+
       # Nobø Energy Control
       climate: 
         - platform: nobo_hub
-          host: [your nobø serial] # You can use the 3 last digits if using discovery
-      #    ip_address: [your nobø ip] # Uncomment if you do not want discovery
+          host: 123 # You can use the 3 last digits if using discovery
+          # ... 
+
+With explicit ip:
+
+      # Nobø Energy Control
+      climate: 
+        - platform: nobo_hub
+          host: 102000054137 # The full serial number
+          ip_address: 192.168.1.30 # the IP of Hub
+          # ...
+
+
+Extra axample:
+
+      # Nobø Energy Control
+      climate: 
+        - platform: nobo_hub
+          host: [your nobø serial]
+          ip_address: [your nobø ip] 
           # command_off: [your completely off week profile name] # Uncomment if you want to enable the completely off setting (bypassing the 7 degrees Away setting)
           # command_on: # Uncomment these if you want to enable the completely off setting, one line for each zone you want to allow bypassing the 7 degrees Away setting
           #   [zone name:return week profile name] 
