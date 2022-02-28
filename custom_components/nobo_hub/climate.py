@@ -18,7 +18,7 @@ import asyncio
 import homeassistant.util.dt as dt_util
 from pynobo import nobo
 
-from homeassistant.const import CONF_IP_ADDRESS,CONF_ID, CONF_HOST,CONF_COMMAND_OFF, CONF_COMMAND_ON, TEMP_CELSIUS, PRECISION_TENTHS
+from homeassistant.const import CONF_IP_ADDRESS, CONF_ID, CONF_HOST, CONF_COMMAND_OFF, CONF_COMMAND_ON, TEMP_CELSIUS, PRECISION_TENTHS
 
 from homeassistant.components.climate.const import (
     HVAC_MODE_HEAT,
@@ -61,8 +61,10 @@ HVAC_MODES_WITHOUT_OFF = [
 
 _LOGGER = logging.getLogger(__name__)
 
+
 def clean_up(name):
     return name.replace(u'\xa0', u' ')
+
 
 def get_id_from_name(name, dictionary):
     for key in dictionary.keys():
@@ -90,14 +92,9 @@ async def async_setup_platform(hass, config, add_entities, discovery_info=None):
     await hub.start()
 
     # Inspect what you get
-    _LOGGER.debug("Hub info: %s \nHub zone: %s \nHub components: %s\nHub week profiles %s\nHub overrides %s\nHub temperatures: %s\n",
-                  hub.hub_info,
-                  hub.zones,
-                  hub.components,
-                  hub.week_profiles,
-                  hub.overrides,
-                  hub.temperatures
-                  )
+    _LOGGER.debug(
+        "Hub info: %s \nHub zone: %s \nHub components: %s\nHub week profiles %s\nHub overrides %s\nHub temperatures: %s\n",
+        hub.hub_info, hub.zones, hub.components, hub.week_profiles, hub.overrides, hub.temperatures)
 
     # Find OFF command (week profile) to use for all zones:
     command_off_name = config.get(CONF_COMMAND_OFF)
@@ -126,13 +123,15 @@ async def async_setup_platform(hass, config, add_entities, discovery_info=None):
                 room_id = get_id_from_name(room_name, hub.zones)
                 if room_id == '' or room_id == None:
                     _LOGGER.error(
-                        "Can not turn on (or off) heater in zone '%s', because that zone (heater name) was not found", room_name)
+                        "Can not turn on (or off) heater in zone '%s', because that zone (heater name) was not found",
+                        room_name)
                 else:
                     command_on_id = get_id_from_name(
                         command_on_name, hub.week_profiles)
                     if command_on_id == '' or command_on_id == None:
                         _LOGGER.error(
-                            "Can not turn on (or off) heater in zone '%s', because week profile '%s' was not found", room_name, command_on_name)
+                            "Can not turn on (or off) heater in zone '%s', because week profile '%s' was not found",
+                            room_name, command_on_name)
                     else:
                         _LOGGER.info("To turn on heater %s '%s', week profile %s '%s' will be used",
                                      room_id, room_name, command_on_id, command_on_name)
@@ -292,7 +291,8 @@ class NoboClimate(ClimateEntity):
             self.schedule_update_ha_state()
         elif hvac_mode == HVAC_MODE_OFF:
             _LOGGER.error(
-                "User tried to turn off heater %s '%s', but this is not configured so this should be impossible.", self._id, self._name)
+                "User tried to turn off heater %s '%s', but this is not configured so this should be impossible.",
+                self._id, self._name)
 
     def can_turn_off(self):
         """
@@ -354,9 +354,6 @@ class NoboClimate(ClimateEntity):
                     if self._nobo.overrides[o]['target_id'] == self._id:
                         self._current_mode = HVAC_MODE_HEAT
 
-        self._current_temperature = self._nobo.get_current_zone_temperature(
-            self._id)
-        self._target_temperature_high = int(
-            self._nobo.zones[self._id]['temp_comfort_c'])
-        self._target_temperature_low = int(
-            self._nobo.zones[self._id]['temp_eco_c'])
+        self._current_temperature = self._nobo.get_current_zone_temperature(self._id)
+        self._target_temperature_high = int(self._nobo.zones[self._id]['temp_comfort_c'])
+        self._target_temperature_low = int(self._nobo.zones[self._id]['temp_eco_c'])
