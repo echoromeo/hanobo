@@ -92,22 +92,19 @@ async def async_setup_platform(hass, config, add_entities, discovery_info=None):
     await hub.start()
 
     # Inspect what you get
-    _LOGGER.debug(
-        "Hub info: %s \nHub zone: %s \nHub components: %s\nHub week profiles %s\nHub overrides %s\nHub temperatures: %s\n",
-        hub.hub_info, hub.zones, hub.components, hub.week_profiles, hub.overrides, hub.temperatures)
+    _LOGGER.debug("Hub info: %s \nHub zone: %s \nHub components: %s\nHub week profiles %s\nHub overrides %s\nHub temperatures: %s\n",
+                  hub.hub_info, hub.zones, hub.components, hub.week_profiles, hub.overrides, hub.temperatures)
 
     # Find OFF command (week profile) to use for all zones:
     command_off_name = config.get(CONF_COMMAND_OFF)
     command_on_by_id = {}  # By default, nothing can be turned on
     if command_off_name == '':
-        _LOGGER.info(
-            "Not possible to turn off (or on) any heater, because OFF week profile was not specified")
+        _LOGGER.info("Not possible to turn off (or on) any heater, because OFF week profile was not specified")
         command_off_id = None
     else:
         command_off_id = get_id_from_name(command_off_name, hub.week_profiles)
         if command_off_id == '' or command_off_id == None:
-            _LOGGER.error(
-                "Can not turn off (or on) any heater, because week profile '%s' was not found", command_off_name)
+            _LOGGER.error("Can not turn off (or on) any heater, because week profile '%s' was not found", command_off_name)
         else:
             _LOGGER.info("To turn off any heater, week profile %s '%s' will be used",
                          command_off_id, command_off_name)
@@ -116,32 +113,27 @@ async def async_setup_platform(hass, config, add_entities, discovery_info=None):
             command_on_dict = config.get(CONF_COMMAND_ON)
             command_on_by_id = {}
             if command_on_dict.keys().__len__ == 0:
-                _LOGGER.info(
-                    "Not possible to turn on any heater, because ON week profile was not specified")
+                _LOGGER.info("Not possible to turn on any heater, because ON week profile was not specified")
             for room_name in command_on_dict.keys():
                 command_on_name = command_on_dict[room_name]
                 room_id = get_id_from_name(room_name, hub.zones)
                 if room_id == '' or room_id == None:
-                    _LOGGER.error(
-                        "Can not turn on (or off) heater in zone '%s', because that zone (heater name) was not found",
-                        room_name)
+                    _LOGGER.error("Can not turn on (or off) heater in zone '%s', because that zone (heater name) was not found",
+                                  room_name)
                 else:
-                    command_on_id = get_id_from_name(
-                        command_on_name, hub.week_profiles)
+                    command_on_id = get_id_from_name(command_on_name, hub.week_profiles)
                     if command_on_id == '' or command_on_id == None:
-                        _LOGGER.error(
-                            "Can not turn on (or off) heater in zone '%s', because week profile '%s' was not found",
-                            room_name, command_on_name)
+                        _LOGGER.error("Can not turn on (or off) heater in zone '%s', because week profile '%s' was not found",
+                                      room_name, command_on_name)
                     else:
                         _LOGGER.info("To turn on heater %s '%s', week profile %s '%s' will be used",
                                      room_id, room_name, command_on_id, command_on_name)
                         command_on_by_id[room_id] = command_on_id
 
-    add_entities(NoboClimate(
-        zones,
-        hub,
-        command_off_id,
-        command_on_by_id.get(zones)) for zones in hub.zones)
+    add_entities(NoboClimate(zones,
+                             hub,
+                             command_off_id,
+                             command_on_by_id.get(zones)) for zones in hub.zones)
 
     _LOGGER.info("Component is up and running on ip %s with serial: %s",
                  hub.hub_ip, hub.hub_serial)
@@ -276,23 +268,20 @@ class NoboClimate(ClimateEntity):
                 self.set_preset_mode(PRESET_NONE)
                 self._current_mode = hvac_mode
                 # Change week profile to OFF
-                self._nobo.update_zone(
-                    self._id, week_profile_id=self._command_off_id)
+                self._nobo.update_zone(self._id, week_profile_id=self._command_off_id)
                 _LOGGER.debug("Turned off heater %s '%s' by switching to week profile %s",
                               self._id, self._name, self._command_off_id)
             else:
                 # Change week profile to normal for this zone
-                self._nobo.update_zone(
-                    self._id, week_profile_id=self._command_on_id)
+                self._nobo.update_zone(self._id, week_profile_id=self._command_on_id)
                 _LOGGER.debug("Turned on heater %s '%s' by switching to week profile %s",
                               self._id, self._name, self._command_on_id)
             # When switching between AUTO and OFF an immediate update does not work (the nobø API seems to answer with old values), but it works if we add a short delay:
             time.sleep(0.5)
             self.schedule_update_ha_state()
         elif hvac_mode == HVAC_MODE_OFF:
-            _LOGGER.error(
-                "User tried to turn off heater %s '%s', but this is not configured so this should be impossible.",
-                self._id, self._name)
+            _LOGGER.error("User tried to turn off heater %s '%s', but this is not configured so this should be impossible.",
+                          self._id, self._name)
 
     def can_turn_off(self):
         """
@@ -311,8 +300,8 @@ class NoboClimate(ClimateEntity):
                 mode = self._nobo.API.OVERRIDE_MODE_COMFORT
             else:  # PRESET_NONE
                 mode = self._nobo.API.OVERRIDE_MODE_NORMAL
-            self._nobo.create_override(
-                mode, self._nobo.API.OVERRIDE_TYPE_CONSTANT, self._nobo.API.OVERRIDE_TARGET_ZONE, self._id)
+            self._nobo.create_override(mode, self._nobo.API.OVERRIDE_TYPE_CONSTANT,
+                                       self._nobo.API.OVERRIDE_TARGET_ZONE, self._id)
             # TODO: override to program if new operation mode == current week profile status
         self.schedule_update_ha_state()
 
@@ -332,8 +321,7 @@ class NoboClimate(ClimateEntity):
 
         This is the only method that should fetch new data for Home Assistant.
         """
-        state = self._nobo.get_current_zone_mode(
-            self._id, dt_util.as_local(dt_util.now()))
+        state = self._nobo.get_current_zone_mode(self._id, dt_util.as_local(dt_util.now()))
         self._current_mode = HVAC_MODE_AUTO
         self._current_operation = PRESET_NONE
 
