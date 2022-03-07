@@ -62,7 +62,7 @@ HVAC_MODES_WITHOUT_OFF = [
 _LOGGER = logging.getLogger(__name__)
 
 
-def clean_up(name):
+def replace_nbsp(name):
     return name.replace(u'\xa0', u' ')
 
 
@@ -172,7 +172,7 @@ class NoboClimate(ClimateEntity):
         """Return device info."""
         return {
             "identifiers": {(DOMAIN, self._nobo.hub_info['serial'])},
-            "name": clean_up(self._nobo.hub_info['name']),
+            "name": replace_nbsp(self._nobo.hub_info['name']),
             "sw_version": self._nobo.hub_info['software_version'],
             "hw_version": self._nobo.hub_info['hardware_version'],
             "manufacturer": OBJECT_NAME

@@ -48,25 +48,23 @@ To get started with this superexperimental implementation:
 ### Update configuration
 * Add the following to your Home Assistant configuration file:
 
-With discovery:
+Basic example with discovery:
 
       # Nobø Energy Control
       climate: 
         - platform: nobo_hub
           host: 123 # You can use the 3 last digits if using discovery
-          # ... 
 
-With explicit ip:
+Example with explicit ip:
 
       # Nobø Energy Control
       climate: 
         - platform: nobo_hub
           host: 102000054137 # The full serial number
           ip_address: 192.168.1.30 # the IP of Hub
-          # ...
 
 
-Extra axample:
+All available options:
 
       # Nobø Energy Control
       climate: 
