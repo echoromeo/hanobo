@@ -1,5 +1,10 @@
 # hanobo
 
+Hanobo is replaced by the official [Nobø Ecohub][nobo_hub] integration.
+Because of this I have removed it from HACS, and will archive this repo.
+
+Thanks for all the help and support with my first open source project, I will try to support oyvindwe with the official integration.
+
 ## Introduction
 Home Assistant implementation of [pynobo][pypi] as a climate component
 
@@ -73,3 +78,4 @@ To get started with this superexperimental implementation:
           custom_components.nobo_hub.climate: debug
 
 [pypi]: https://pypi.org/project/pynobo/
+[nobo_hub]: https://www.home-assistant.io/integrations/nobo_hub/
